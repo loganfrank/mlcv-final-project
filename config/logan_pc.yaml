@@ -1,0 +1,43 @@
+# User specific paths for data, etc
+Paths:
+  # Location of corn image data
+  corn_image_directory : 'E:/Logan_Agriculture/corn_data/images/'
+
+  # Location of saved corn network weights, optimizers, etc.
+  corn_network_directory : 'E:/Logan_Agriculture/corn_data/networks/'
+
+  # Location of parsed corn data such as dataframes, etc.
+  corn_data_directory : 'E:/Logan_Agriculture/corn_data/parsed/'
+  
+  # Location of corn results such as confusion matrices, final val/test accuracies, etc.
+  corn_results_directory : 'E:/Logan_Agriculture/corn_data/results/'
+
+  # Location of tomato image data
+  tomato_image_directory : 'E:/Logan_Agriculture/tomato_data/images/'
+
+  # Location of saved tomato network weights, optimizers, etc.
+  tomato_network_directory : 'E:/Logan_Agriculture/tomato_data/networks/'
+
+  # Location of parsed tomato data such as dataframes, etc.
+  tomato_data_directory : 'E:/Logan_Agriculture/tomato_data/parsed/'
+
+  # Location of tomato results such as confusion matrices, final val/test accuracies, etc.
+  tomato_results_directory : 'E:/Logan_Agriculture/tomato_data/results/'
+
+  # Location of soybean image data
+  soybean_image_directory : 'E:/Logan_Agriculture/soybean_data/images/'
+
+  # Location of saved soybean network weights, optimizers, etc.
+  soybean_network_directory : 'E:/Logan_Agriculture/soybean_data/networks/'
+
+  # Location of parsed soybean data such as dataframes, etc.
+  soybean_data_directory : 'E:/Logan_Agriculture/soybean_data/parsed/'
+  
+  # Location of soybean results such as confusion matrices, final val/test accuracies, etc.
+  soybean_results_directory : 'E:/Logan_Agriculture/soybean_data/results/'
+
+  # Location of where to store stuff for publication
+  publication_directory : '/Users/frank.580/Desktop/agriculture/publication_materials/'
+  
+# Useful if multiple code files share variables
+Variables:
