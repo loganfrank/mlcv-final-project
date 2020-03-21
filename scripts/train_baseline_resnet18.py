@@ -8,6 +8,7 @@ sys.path.append(os.getcwd() + '/')
 
 ## Deep learning and array processing libraries
 import numpy as np 
+np.random.seed(1)
 import pandas as pd 
 import torch
 import torch.nn as nn
@@ -30,7 +31,7 @@ from utils.transforms import AdaptiveCenterCrop
 from utils.transforms import BrightnessJitter
 from utils.transforms import MedianFilter
 from utils.functions import listdir
-from networks.resnet18 import resnet18
+from networks.resnet18_bn import resnet18 as resnet
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
@@ -38,16 +39,16 @@ if __name__ == '__main__':
     elif sys.platform == 'darwin':
         config_path = '/Users/loganfrank/Desktop/research/agriculture/code/cse-fabe/config/logan_mac.yaml'
     elif sys.platform == 'linux':
-        pass
-    dataset = input('Please enter the crop you want to use: ')
-    dataset_image_directory = f'{dataset}_image_directory'
-    dataset_network_directory = f'{dataset}_network_directory'
-    dataset_data_directory = f'{dataset}_data_directory'
-    dataset_results_directory = f'{dataset}_results_directory'
+        config_path = '/home/loganfrank/Desktop/code/mlcv-agriculture/code/config/logan_pc.yaml'
+    dataset = input('Please enter the classifier name: ')
+    dataset_image_directory = f'image_directory'
+    dataset_network_directory = f'network_directory'
+    dataset_data_directory = f'data_directory'
+    dataset_results_directory = f'results_directory'
 
-    batch_size = 6 # because we have 11 classes or 6 classes for soybean
+    batch_size = 30
     learning_rate = 0.01
-    num_epochs = 50
+    num_epochs = 20
     experiment = f'resnet18_{dataset}_batchsize{batch_size}_lr{learning_rate}_numepochs{num_epochs}'
 
     # Open the yaml config file
@@ -69,6 +70,9 @@ if __name__ == '__main__':
 
     except:
         raise Exception('Error loading data from config file.')
+
+    # Do we want to balance the sets?
+    balanced = True
 
     # Flag for if we want to load the network and continue training or fine tune
     load_network_flag = False
@@ -102,28 +106,63 @@ if __name__ == '__main__':
         parameters.num_epochs = num_epochs
 
     # Load pandas dataframe
-    dataframe = pd.read_pickle(os.path.abspath(f'{data_directory}{dataset}.pkl'))
+    dataframe = pd.read_pickle(os.path.abspath(f'{data_directory}rgb.pkl'))
 
     # Create the data transforms for each respective set
-    train_transform = transforms.Compose([AdaptiveCenterCrop(), Resize(size=345), transforms.RandomHorizontalFlip(p=0.5), 
+    rgb_train_transform = transforms.Compose([Resize(size=256), transforms.RandomHorizontalFlip(p=0.5), 
                                         transforms.RandomVerticalFlip(p=0.5), RotationTransform(angles=[0, 90, 180, 270]), 
-                                        MedianFilter(filter_size=3, p=0.1), GammaJitter(low=0.9, high=1.1), BrightnessJitter(low=0.9, high=1.1),
+                                        GammaJitter(low=0.9, high=1.1),
                                         transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])                         
-    test_transform = transforms.Compose([AdaptiveCenterCrop(), Resize(size=345), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    rgb_test_transform = transforms.Compose([Resize(size=256), transforms.ToTensor(), transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    nir_train_transform = transforms.Compose([Resize(size=256), transforms.RandomHorizontalFlip(p=0.5), 
+                                        transforms.RandomVerticalFlip(p=0.5), RotationTransform(angles=[0, 90, 180, 270]), 
+                                        transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.25])])                         
+    nir_test_transform = transforms.Compose([Resize(size=256), transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.25])])
+    rgbnir_train_transform = 5
+    rgbnir_test_transform = 6
 
-    # Load training dataset and dataloader
-    train_dataset = datasets.balance_dataset(image_root_directory=image_directory, dataframe=dataframe,
-                                        transform=train_transform, phase='train', balance=True, cut=None)
-    train_dataloader = DataLoader(train_dataset, batch_size=parameters.batch_size, shuffle=False)
+    if dataset == 'rgb':
+        train_transform = rgb_train_transform
+        test_transform = rgb_test_transform
+    elif dataset == 'nir':
+        train_transform = nir_train_transform
+        test_transform = nir_test_transform
+    elif dataset == 'rgbnir':
+        train_transform = rgbnir_train_transform
+        test_transform = rgbnir_test_transform
 
-    # Load validation dataset and dataloader
-    val_dataset = datasets.balance_dataset(image_root_directory=image_directory, dataframe=dataframe, 
-                                            transform=test_transform, phase='val', balance=True, cut=1)
-    val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+
+    if balanced:
+        # Load training dataset and dataloader
+        train_dataset = datasets.balance_dataset(image_root_directory=image_directory, dataframe=dataframe,  
+                                                transform=train_transform, phase='train', balance=True, cut=None, mode=dataset)
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
+
+        # Load testing dataset and dataloader
+        test_dataset = datasets.balance_dataset(image_root_directory=image_directory, dataframe=dataframe,  
+                                                transform=test_transform, phase='test', balance=True, cut=1, mode=dataset)
+        test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+
+        # Load validation dataset and dataloader
+        val_dataset = datasets.balance_dataset(image_root_directory=image_directory, dataframe=dataframe, 
+                                                transform=test_transform, phase='val', balance=True, cut=1, mode=dataset)
+        val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+    else:
+        # Create the train dataset
+        train_dataset = datasets.imbalance_dataset(image_root_directory=image_directory, dataframe=dataframe, transform=train_transform, phase='train')
+        train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+        # Create the test dataset
+        test_dataset = datasets.imbalance_dataset(image_root_directory=image_directory, dataframe=dataframe, transform=test_transform, phase='test')
+        test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False)
+
+        # Create the validation dataset
+        val_dataset = datasets.imbalance_dataset(image_root_directory=image_directory, dataframe=dataframe, transform=test_transform, phase='val')
+        val_dataloader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     # Create the network, (potentially) load network state dictionary, and send the network to the compute device
     num_classes = len(train_dataset.classes_unique)
-    network = resnet18(num_classes)
+    network = resnet(num_classes)
     if load_weights:
         network.load_state_dict(torch.load(os.path.abspath(f'{network_directory}resnet18_weights.pth'), map_location='cpu'))
     elif load_network_flag:
@@ -152,7 +191,7 @@ if __name__ == '__main__':
         optimizer.load_state_dict(torch.load(os.path.abspath(f'{network_directory}{parameters.experiment}_optimizer.pth')))
 
     # Create a learning rate scheduler -- this will reduce the learning rate by a factor when learning becomes stagnant
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
 
     # Send network and other parameters to a helper function for training the neural network
     train_network.train_balanced_network(network=network, optimizer=optimizer, scheduler=scheduler, 

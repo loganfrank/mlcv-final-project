@@ -12,7 +12,7 @@ from PIL import Image
 
 class balance_dataset(Dataset):
     
-    def __init__(self, image_root_directory, dataframe, transform=None, phase='train', balance=False, cut=None):
+    def __init__(self, image_root_directory, dataframe, transform=None, phase='train', balance=False, cut=None, mode='rgb'):
         # The root directory containing all image data for a desired set/phase
         self.image_root_directory = os.path.abspath(f'{image_root_directory}{phase}/')
         dataframe_subset = dataframe.loc[phase]
@@ -26,6 +26,7 @@ class balance_dataset(Dataset):
         # Get the ground truth class labels for each instance, define the set of unique output classes and assign them an integer index
         self.classes = dataframe_subset.to_numpy().astype('U')
         self.classes = np.squeeze(self.classes)
+        self.mode = mode
         self.classes_unique, classes_counts = np.unique(self.classes, return_counts=True)
         self.classes_to_index = {}
         for index, value in enumerate(self.classes_unique):
@@ -62,9 +63,9 @@ class balance_dataset(Dataset):
             # Loop through each possible class and perform the balancing computations
             for row_index, class_value in enumerate(self.classes_unique):
                 # Get the instance image names, instance class labels, and instance crop labels for each class
-                class_instances = dataframe_subset[dataframe_subset['disease'] == class_value].index.get_level_values(1).to_numpy().astype('U')
-                class_labels = dataframe_subset[dataframe_subset['disease'] == class_value].to_numpy().astype('U')
-                class_crops = dataframe_subset[dataframe_subset['disease'] == class_value].index.get_level_values(0).to_numpy().astype('U')
+                class_instances = dataframe_subset[dataframe_subset['anomaly'] == class_value].index.get_level_values(1).to_numpy().astype('U')
+                class_labels = dataframe_subset[dataframe_subset['anomaly'] == class_value].to_numpy().astype('U')
+                class_crops = dataframe_subset[dataframe_subset['anomaly'] == class_value].index.get_level_values(0).to_numpy().astype('U')
                 
                 # Create the array used for doing the same shuffle on all arrays
                 shuffle = np.arange(class_instances.shape[0])
@@ -134,7 +135,17 @@ class balance_dataset(Dataset):
 
     def __getitem__(self, index):
         # Open the input image using PIL
-        image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.crops[index]}/{self.classes[index]}/{self.instances[index]}'))
+        if self.mode == 'rgb':
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+        if self.mode == 'nir':
+            nir_instance = self.instances[index]
+            nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
+        if self.mode == 'rgbnir':
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+            nir_instance = self.instances[index]
+            nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
+            nir_image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
 
         # Identify the class label and convert it to long
         class_index = self.classes_index[index]
@@ -149,7 +160,7 @@ class balance_dataset(Dataset):
 
 class imbalance_dataset(Dataset):
     
-    def __init__(self, image_root_directory, dataframe, transform=None, phase='train'):
+    def __init__(self, image_root_directory, dataframe, transform=None, phase='train', mode='rgb'):
         # The root directory containing all image data for a desired set/phase
         self.image_root_directory = os.path.abspath(f'{image_root_directory}{phase}/')
         dataframe_subset = dataframe.loc[phase]
@@ -157,8 +168,7 @@ class imbalance_dataset(Dataset):
         # Get the list of instance file names
         self.instances = dataframe_subset.index.get_level_values(1).to_numpy().astype('U')
 
-        # Get the crop associated with each instance
-        self.crops = dataframe_subset.index.get_level_values(0).to_numpy().astype('U')
+        self.mode = mode 
 
         # Get the ground truth class labels for each instance, define the set of unique output classes and assign them an integer index
         self.classes = dataframe_subset.to_numpy().astype('U')
@@ -184,7 +194,17 @@ class imbalance_dataset(Dataset):
 
     def __getitem__(self, index):
         # Open the input image using PIL
-        image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.crops[index]}/{self.classes[index]}/{self.instances[index]}'))
+        if self.mode == 'rgb':
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+        if self.mode == 'nir':
+            nir_instance = self.instances[index]
+            nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
+        if self.mode == 'rgbnir':
+            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+            nir_instance = self.instances[index]
+            nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
+            nir_image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
 
         # Identify the class label and convert it to long
         class_index = self.classes_index[index]

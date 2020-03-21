@@ -15,8 +15,8 @@ from utils.functions import listdir
 def create_dataframe(path, output_path, dataset):
 
     # Initialize DataFrame with its index and column names
-    index = pd.MultiIndex(levels=[[], [], []], codes=[[], [], []], names=['phase', 'crop', 'instance'])
-    dataframe = pd.DataFrame(index=index, columns=['disease'])
+    index = pd.MultiIndex(levels=[[], [], []], codes=[[], [], []], names=['phase', 'field', 'instance'])
+    dataframe = pd.DataFrame(index=index, columns=['anomaly'])
 
     # Loop through each set of data (i.e. train, test, val)
     phases = os.listdir(path)
@@ -25,36 +25,28 @@ def create_dataframe(path, output_path, dataset):
 
         # Skip over files (we only want directories at this point)
         if not os.path.isdir(phase_path):
-            print(f'{crop_class_path} is not a directory!')
+            print(f'{phase_path} is not a directory!')
             continue
 
-        # Loop through each crop in the set (i.e. corn, soybean)
-        crops = os.listdir(phase_path)
-        for crop in crops:
-            crop_path = f'{phase_path}{crop}/'
+        
+
+        # Loop through each disease in the crop (i.e. frogeye, rotten core, etc.)
+        diseases = os.listdir(phase_path)
+        for disease in diseases:
+            disease_path = f'{phase_path}{disease}/'
 
             # Skip over files (we only want directories at this point)
-            if not os.path.isdir(crop_path):
-                print(f'{crop_path} is not a directory!')
+            if not os.path.isdir(disease_path):
+                print(f'{disease_path} is not a directory!')
                 continue
 
-            # Loop through each disease in the crop (i.e. frogeye, rotten core, etc.)
-            diseases = os.listdir(crop_path)
-            for disease in diseases:
-                disease_path = f'{crop_path}{disease}/'
-
-                # Skip over files (we only want directories at this point)
-                if not os.path.isdir(crop_path):
-                    print(f'{crop_class_path} is not a directory!')
+            # Loop through each instance in the disease, add the instance as a row in the DataFrame
+            instances = listdir(disease_path, '*.jpg')
+            for instance in instances:
+                if instance[-4:] != '.jpg' or instance[-8:] == '_nir.jpg':
+                    print(f'We do not want this garbage: {instance}')
                     continue
-
-                # Loop through each instance in the disease, add the instance as a row in the DataFrame
-                instances = listdir(disease_path, '*.jpg')
-                for instance in instances:
-                    if instance[-4:] != '.jpg':
-                        print(f'We do not want this garbage: {instance}')
-                        continue
-                    dataframe.loc[(phase, crop, instance)] = disease
+                dataframe.loc[(phase, 'rgb', instance)] = disease
                     
 
     # Save the DataFrame for later use in constructing our DataSet and DataLoader objects
@@ -66,12 +58,12 @@ if __name__ == '__main__':
     elif sys.platform == 'darwin':
         config_path = '/Users/loganfrank/Desktop/research/agriculture/code/cse-fabe/config/logan_mac.yaml'
     elif sys.platform == 'linux':
-        pass
-    dataset = input('Please enter the crop you want to use: ')
-    dataset_image_directory = f'{dataset}_image_directory'
-    dataset_network_directory = f'{dataset}_network_directory'
-    dataset_data_directory = f'{dataset}_data_directory'
-    dataset_results_directory = f'{dataset}_results_directory'
+        config_path = '/home/loganfrank/Desktop/code/mlcv-agriculture/code/config/logan_pc.yaml'
+    dataset = 'rgb'
+    dataset_image_directory = f'image_directory'
+    dataset_network_directory = f'network_directory'
+    dataset_data_directory = f'data_directory'
+    dataset_results_directory = f'results_directory'
 
     # Open the yaml config file
     try:

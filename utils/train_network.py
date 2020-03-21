@@ -45,14 +45,10 @@ def train_balanced_network(network, optimizer, scheduler, parameters, train_data
 
             # Load in batch image data
             image_data = batch_sample[0]
-            if parameters.batch_size > 1:
-                image_data = torch.squeeze(image_data)
             image_data.requires_grad = False
 
             # Load in batch label data
             label_data = batch_sample[1]
-            if parameters.batch_size > 1:
-                label_data = torch.squeeze(label_data) 
             label_data.requires_grad = False
 
             # Shuffle the batch data (since we don't shuffle the data loader)
