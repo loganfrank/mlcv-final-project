@@ -31,7 +31,7 @@ from utils.transforms import AdaptiveCenterCrop
 from utils.transforms import BrightnessJitter
 from utils.transforms import MedianFilter
 from utils.functions import listdir
-from networks.resnet18_bn import resnet18 as resnet
+from networks.resnet18_bn_nir import resnet18 as resnet
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
