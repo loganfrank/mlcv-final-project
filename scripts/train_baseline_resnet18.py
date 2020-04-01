@@ -30,8 +30,11 @@ from utils.transforms import Resize
 from utils.transforms import AdaptiveCenterCrop
 from utils.transforms import BrightnessJitter
 from utils.transforms import MedianFilter
+from utils.transforms import RGBNIRTransform
 from utils.functions import listdir
-from networks.resnet18_bn_nir import resnet18 as resnet
+from networks.resnet18_bn import resnet18 as resnet_rgb
+from networks.resnet18_bn_nir import resnet18 as resnet_nir
+from networks.resnet18_bn_rgbnir import resnet18 as resnet_rgbnir
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
@@ -118,8 +121,8 @@ if __name__ == '__main__':
                                         transforms.RandomVerticalFlip(p=0.5), RotationTransform(angles=[0, 90, 180, 270]), 
                                         transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.25])])                         
     nir_test_transform = transforms.Compose([Resize(size=256), transforms.ToTensor(), transforms.Normalize(mean=[0.5], std=[0.25])])
-    rgbnir_train_transform = 5
-    rgbnir_test_transform = 6
+    rgbnir_train_transform = RGBNIRTransform(resize=256, hflip=0.5, vflip=0.5, rotation=True, gamma_jitter=[0.9, 1.1], normalize=[[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]], train=True)
+    rgbnir_test_transform = RGBNIRTransform(resize=256, normalize=[[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]], train=False)
 
     if dataset == 'rgb':
         train_transform = rgb_train_transform
@@ -162,7 +165,13 @@ if __name__ == '__main__':
 
     # Create the network, (potentially) load network state dictionary, and send the network to the compute device
     num_classes = len(train_dataset.classes_unique)
-    network = resnet(num_classes)
+    if dataset == 'rgb':
+        network = resnet_rgb(num_classes)
+    elif dataset == 'nir':
+        network = resnet_nir(num_classes)
+    else:
+        network = resnet_rgbnir(num_classes)
+    
     if load_weights:
         network.load_state_dict(torch.load(os.path.abspath(f'{network_directory}resnet18_weights.pth'), map_location='cpu'))
     elif load_network_flag:
@@ -191,10 +200,16 @@ if __name__ == '__main__':
         optimizer.load_state_dict(torch.load(os.path.abspath(f'{network_directory}{parameters.experiment}_optimizer.pth')))
 
     # Create a learning rate scheduler -- this will reduce the learning rate by a factor when learning becomes stagnant
-    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=4, gamma=0.1)
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=5, gamma=0.1)
 
     # Send network and other parameters to a helper function for training the neural network
-    train_network.train_balanced_network(network=network, optimizer=optimizer, scheduler=scheduler, 
-                                        parameters=parameters, train_dataloader=train_dataloader, 
-                                        val_dataloader=val_dataloader, compute_device=compute_device, 
-                                        network_directory=network_directory, results_directory=results_directory)
+    if balanced:
+        train_network.train_balanced_network(network=network, optimizer=optimizer, scheduler=scheduler, 
+                                            parameters=parameters, train_dataloader=train_dataloader, 
+                                            val_dataloader=val_dataloader, compute_device=compute_device, 
+                                            network_directory=network_directory, results_directory=results_directory)
+    else:
+        train_network.train_imbalanced_network(network=network, optimizer=optimizer, scheduler=scheduler,
+                                                parameters=parameters, train_dataloader=train_dataloader,
+                                                val_dataloader=val_dataloader, compute_device=compute_device,
+                                                network_directory=network_directory, results_directory=results_directory)

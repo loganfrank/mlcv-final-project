@@ -21,6 +21,10 @@ class RotationTransform(object):
     def __call__(self, image):
         angle = random.choice(self.angles)
         return TF.rotate(image, angle)
+    
+    def get_params(self):
+        return random.choice(self.angles)
+
 
 class GammaJitter(object):
     """
@@ -34,6 +38,9 @@ class GammaJitter(object):
     def __call__(self, image):
         gamma = np.random.uniform(self.low, self.high)
         return TF.adjust_gamma(image, gamma)
+    
+    def get_params(self):
+        return np.random.uniform(self.low, self.high)
 
 class BrightnessJitter(object):
     """
@@ -105,6 +112,56 @@ class MedianFilter(object):
         else:
             return image
 
+class RGBNIRTransform(object):
+    def __init__(self, resize=None, hflip=None, vflip=None, rotation=None, gamma_jitter=None, normalize=None, train=True):
+        self.resize = Resize(size=resize)
+        if train:
+            self.hflip = hflip
+            self.vflip = vflip
+            self.rotation = RotationTransform()
+            self.gamma_jitter = GammaJitter(low=gamma_jitter[0], high=gamma_jitter[1])
+        self.normalize = transforms.Normalize(mean=normalize[0], std=normalize[1])
+        self.nir_normalize = transforms.Normalize(mean=[0.5], std=[0.25])
+        self.train = train
+
+    def __call__(self, rgb, nir):
+        # Resize both images
+        rgb = self.resize(rgb)
+        nir = self.resize(nir)
+
+        # Perform the training transforms
+        if self.train:
+            # Check for random horizontal flip
+            num = random.random()
+            if num < self.hflip:
+                rgb = TF.hflip(rgb)
+                nir = TF.hflip(nir)
+            
+            # Check for random vertical flip
+            num = random.random()
+            if num < self.vflip:
+                rgb = TF.vflip(rgb)
+                nir = TF.vflip(nir)
+
+            # Random rotation
+            rotation_angle = self.rotation.get_params()
+            rgb = TF.rotate(rgb, rotation_angle)
+            nir = TF.rotate(nir, rotation_angle)
+
+            # Gamma adjustment
+            gamma_adjustment = self.gamma_jitter.get_params()
+            rgb = TF.adjust_gamma(rgb, gamma_adjustment)
+            nir = TF.adjust_gamma(nir, gamma_adjustment)
         
-        
-        
+        # Convert to PyTorch tensor
+        rgb = TF.to_tensor(rgb)
+        nir = TF.to_tensor(nir)
+
+        # Normalize both images
+        rgb = self.normalize(rgb)
+        nir = self.nir_normalize(nir)
+
+        return rgb, nir
+
+    def __repr__(self):
+        pass

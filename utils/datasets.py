@@ -2,6 +2,7 @@
 import os
 
 ## PyTorch imports
+import torch
 from torch.utils.data import Dataset
 from torchvision import transforms
 
@@ -9,6 +10,10 @@ from torchvision import transforms
 import numpy as np
 import pandas as pd
 from PIL import Image
+
+#### TEMP
+import matplotlib.pyplot as plt 
+import matplotlib as mpl
 
 class balance_dataset(Dataset):
     
@@ -142,18 +147,21 @@ class balance_dataset(Dataset):
             nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
             image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
         if self.mode == 'rgbnir':
-            image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
-            nir_instance = self.instances[index]
-            nir_instance = nir_instance.replace('.jpg', '_nir.jpg')
-            nir_image = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir_instance}'))
+            rgb = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+            nir = self.instances[index]
+            nir = nir.replace('.jpg', '_nir.jpg')
+            nir = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir}'))
 
         # Identify the class label and convert it to long
         class_index = self.classes_index[index]
         class_index = class_index.astype(np.int64)
 
         # Perform the data transform on the image
-        if self.transform:
+        if self.transform and self.mode != 'rgbnir':
             image = self.transform(image)
+        else:
+            rgb, nir = self.transform(rgb, nir)
+            image = torch.cat((rgb, nir), dim=0)
 
         return (image, class_index)
 
