@@ -8,7 +8,7 @@ import torch
 def mean_squared_error(img1, img2):
     """
     Calculates the mean squared error between two images
-    
+
     Input:
     -- img1 :: 2D NumPy array that is a greyscale image
     -- img2 :: 2D NumPy array that is a greyscale image
@@ -47,8 +47,14 @@ def earth_movers_distance(real, fake):
     -- :: the earth movers distance between the two greyscale images
     """
 
-    real_histogram = cv.calcHist(real, [0], None, [256], [0, 256])
-    fake_histogram = cv.calcHist(fake, [0], None, [256], [0, 256])
+    real_histogram = np.zeros(256)
+    fake_histogram = np.zeros(256)
+    real_values, real_counts = np.unique(real, return_counts=True)
+    fake_values, fake_counts = np.unique(fake, return_counts=True)
+    for rv, rc in zip(real_values, real_counts):
+        real_histogram[rv] = rc
+    for fv, fc in zip(fake_values, fake_counts):
+        fake_histogram[fv] = fc
     return wasserstein_distance(real_histogram, fake_histogram)
 
 def structural_similarity_index_measure(real, fake):
@@ -77,5 +83,22 @@ def frechet_inception_distance(real_image_path, fake_image_path):
     -- :: the Frechet Inception distance between the two sets
     """
 
-    return fid.compute(real_image_path, fake_image_path, gpu='cuda:0')
+    return fid.compute(real_image_path, fake_image_path)
 
+if __name__ == '__main__':
+    real = np.random.randint(0, 256, size=(256, 256))
+    fake = np.random.randint(0, 256, size=(256, 256))
+
+    mse = mean_squared_error(real, fake)
+    psnr = peak_signal_to_noise_ratio(real, fake)
+    emd = earth_movers_distance(real, fake)
+    ssim = structural_similarity_index_measure(real, fake)
+
+    ## FID might not be as helping since the images are grayscale and the CNN takes 3 channels (RGB)
+    # frechet = frechet_inception_distance(real_image_path='/Users/loganfrank/Desktop/code/mlcv-final-project/data/images/test/test1', fake_image_path='/Users/loganfrank/Desktop/code/mlcv-final-project/data/images/test/test2')
+
+    print(f'MSE: {mse}')
+    print(f'PSNR: {psnr}')
+    print(f'EMD: {emd}')
+    print(f'SSIM: {ssim}')
+    # print(f'FID: {frechet}')
