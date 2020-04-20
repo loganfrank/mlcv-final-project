@@ -150,7 +150,6 @@ class Pix2PixHDModel(BaseModel):
             return self.netD.forward(input_concat)
 
     def forward(self, label, inst, image, feat, infer=False):
-        print()
         # Encode Inputs
         input_label, inst_map, real_image, feat_map = self.encode_input(label, inst, image, feat)  
 
@@ -167,7 +166,7 @@ class Pix2PixHDModel(BaseModel):
         pred_fake_pool = self.discriminate(input_label, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
 
-        # Real Detection and Loss        
+        # Real Detection and Loss
         pred_real = self.discriminate(input_label, real_image)
         loss_D_real = self.criterionGAN(pred_real, True)
 

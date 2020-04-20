@@ -1,5 +1,6 @@
 import time
 import os
+from progress.bar import Bar
 import numpy as np
 import torch
 from torch.autograd import Variable
@@ -53,21 +54,22 @@ def run():
     display_delta = total_steps % opt.display_freq
     print_delta = total_steps % opt.print_freq
     save_delta = total_steps % opt.save_latest_freq
-    
+    print(f"Epochs: {opt.niter + opt.niter_decay + 1}")
     for epoch in range(start_epoch, opt.niter + opt.niter_decay + 1):
         print(f"Epoch: {epoch}")
         print(f"Dataset Size: {dataset_size}")
         epoch_start_time = time.time()
         if epoch != start_epoch:
             epoch_iter = epoch_iter % dataset_size
+        bar = Bar("Iterating batches", max=len(dataset))
         for i, data in enumerate(dataset, start=epoch_iter):
+            bar.next()
             if total_steps % opt.print_freq == print_delta:
                 iter_start_time = time.time()
             total_steps += opt.batchSize
             epoch_iter += opt.batchSize
             # whether to collect output images
             save_fake = total_steps % opt.display_freq == display_delta
-            print("forward pass")
             ############## Forward Pass ######################
             losses, generated = model(Variable(data['label']), Variable(data['inst']), 
                 Variable(data['image']), Variable(data['feat']), infer=save_fake)
@@ -122,6 +124,7 @@ def run():
             if epoch_iter >= dataset_size:
                 break
             
+        bar.finish()
         # end of epoch 
         iter_end_time = time.time()
         print('End of epoch %d / %d \t Time Taken: %d sec' %
