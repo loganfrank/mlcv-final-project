@@ -1,15 +1,15 @@
 # User specific paths for data, etc
 Paths:
-  # Location of corn image data
-  image_directory : '/Users/loganfrank/Desktop/code/mlcv-final-project/data/images/'
+  # Location of image data
+  image_directory : '/Users/loganfrank/Desktop/code/mlcv-final-project/data/single_class/'
 
-  # Location of saved corn network weights, optimizers, etc.
+  # Location of saved network weights, optimizers, etc.
   network_directory : '/Users/loganfrank/Desktop/code/mlcv-final-project/data/networks/'
 
-  # Location of parsed corn data such as dataframes, etc.
+  # Location of parsed data such as dataframes, etc.
   data_directory : '/Users/loganfrank/Desktop/code/mlcv-final-project/data/parsed/'
   
-  # Location of corn results such as confusion matrices, final val/test accuracies, etc.
+  # Location of results such as confusion matrices, final val/test accuracies, etc.
   results_directory : '/Users/loganfrank/Desktop/code/mlcv-final-project/data/results/'
 
   

@@ -57,6 +57,9 @@ def test_baseline_network(network, dataloader, compute_device, experiment, resul
 
     # Compute the general accuracy, F1 score, Cohen's Kappa score, and confusion matrix for the data and print each
     accuracy = metrics.accuracy_score(true_classes, predicted_classes)
+    weighted_accuracy = metrics.balanced_accuracy_score(true_classes, predicted_classes)
+    precision = metrics.precision_score(true_classes, predicted_classes, average='weighted')
+    recall = metrics.recall_score(true_classes, predicted_classes, average='weighted')
     micro_f1 = metrics.f1_score(true_classes, predicted_classes, average='micro')
     macro_f1 = metrics.f1_score(true_classes, predicted_classes, average='macro')
     weighted_f1 = metrics.f1_score(true_classes, predicted_classes, average='weighted')
@@ -65,6 +68,9 @@ def test_baseline_network(network, dataloader, compute_device, experiment, resul
     confusion_matrix = confusion_matrix / np.sum(confusion_matrix, axis=1)
     
     print(f'Accuracy: {accuracy : 0.4f}')
+    print(f'Weighted Accuracy: {weighted_accuracy : 0.4f}')
+    print(f'Precision: {precision : 0.4f}')
+    print(f'Recall: {recall : 0.4f}')
     print('Accuracy by class:')
     for class_name, class_accuracy in zip(dataloader.dataset.classes_unique, confusion_matrix.diagonal()):
         print(f'\tClass {class_name}: { class_accuracy : 0.4f}')
@@ -79,6 +85,12 @@ def test_baseline_network(network, dataloader, compute_device, experiment, resul
         # Save the general accuracy, F1 score, and Cohen's Kappa score
         with open(os.path.abspath(f'{results_directory}{experiment}_results_test.txt'), 'w') as f:
             f.write(f'Accuracy: {accuracy : 0.4f} \n')
+            f.write(f'Weighted Accuracy: {weighted_accuracy : 0.4f} \n')
+            f.write(f'Precision: {precision : 0.4f} \n')
+            f.write(f'Recall: {recall : 0.4f} \n')
+            f.write('Accuracy by class: \n')
+            for class_name, class_accuracy in zip(dataloader.dataset.classes_unique, confusion_matrix.diagonal()):
+                f.write(f'\tClass {class_name}: { class_accuracy : 0.4f} \n')
             f.write(f'Micro F1: {micro_f1 : 0.4f} \n')
             f.write(f'Macro F1: {macro_f1 : 0.4f} \n')
             f.write(f'Weighted F1: {weighted_f1 : 0.4f} \n')
