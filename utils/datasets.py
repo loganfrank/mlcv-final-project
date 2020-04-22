@@ -151,13 +151,22 @@ class balance_dataset(Dataset):
             nir = self.instances[index]
             nir = nir.replace('.jpg', '_nir.jpg')
             nir = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir}'))
+        if self.mode == 'oracle':
+            rgb = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+            nir = self.instances[index]
+            nir = nir.replace('.jpg', '_synthesized_image.jpg')
+            nir = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir}'))
+            nir = np.asarray(nir) # shape (width, height, channels)
+            nir = nir.mean(axis=2) # shape (width, height)
+            nir = Image.fromarray(nir.astype('uint8'))
+
 
         # Identify the class label and convert it to long
         class_index = self.classes_index[index]
         class_index = class_index.astype(np.int64)
 
         # Perform the data transform on the image
-        if self.transform and self.mode != 'rgbnir':
+        if self.transform and self.mode != 'rgbnir' and self.mode != 'oracle':
             image = self.transform(image)
         else:
             rgb, nir = self.transform(rgb, nir)
@@ -213,13 +222,21 @@ class imbalance_dataset(Dataset):
             nir = self.instances[index]
             nir = nir.replace('.jpg', '_nir.jpg')
             nir = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir}'))
+        if self.mode == 'oracle':
+            rgb = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{self.instances[index]}'))
+            nir = self.instances[index]
+            nir = nir.replace('.jpg', '_synthesized_image.jpg')
+            nir = Image.open(os.path.abspath(f'{self.image_root_directory}/{self.classes[index]}/{nir}'))
+            nir = np.asarray(nir) # shape (width, height, channels)
+            nir = nir.mean(axis=2) # shape (width, height)
+            nir = Image.fromarray(nir.astype('uint8'))
 
         # Identify the class label and convert it to long
         class_index = self.classes_index[index]
         class_index = class_index.astype(np.int64)
 
         # Perform the data transform on the image
-        if self.transform and self.mode != 'rgbnir':
+        if self.transform and self.mode != 'rgbnir' and self.mode != 'oracle':
             image = self.transform(image)
         else:
             rgb, nir = self.transform(rgb, nir)

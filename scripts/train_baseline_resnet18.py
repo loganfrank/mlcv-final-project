@@ -38,7 +38,7 @@ from networks.resnet18_bn_rgbnir import resnet18 as resnet_rgbnir
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
-        config_path = '/Users/frank.580/Desktop/code/cse-fabe/config/logan_pc.yaml'
+        config_path = 'C:/Users/frank.580/Desktop/mlcv-final-project/config/logan_pc.yaml'
     elif sys.platform == 'darwin':
         config_path = '/Users/loganfrank/Desktop/research/agriculture/code/cse-fabe/config/logan_mac.yaml'
     elif sys.platform == 'linux':
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     # Flag for if we want to load the network and continue training or fine tune
     load_network_flag = False
-    load_weights = False
+    load_weights = True
 
     if not load_network_flag:
         # This helps to ensure we don't overwrite existing results
@@ -96,6 +96,7 @@ if __name__ == '__main__':
 
     # Define the compute device (either GPU or CPU)
     compute_device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print(compute_device)
 
     # Set up a parameters object for saving hyperparameters, etc.
     parameters = parameters.Parameters()
@@ -130,7 +131,7 @@ if __name__ == '__main__':
     elif dataset == 'nir':
         train_transform = nir_train_transform
         test_transform = nir_test_transform
-    elif dataset == 'rgbnir':
+    elif dataset == 'rgbnir' or dataset == 'oracle':
         train_transform = rgbnir_train_transform
         test_transform = rgbnir_test_transform
 
@@ -173,7 +174,7 @@ if __name__ == '__main__':
         network = resnet_rgbnir(num_classes)
     
     if load_weights:
-        network.load_state_dict(torch.load(os.path.abspath(f'{network_directory}resnet18_weights.pth'), map_location='cpu'))
+        network.load_state_dict(torch.load(os.path.abspath(f'{network_directory}resnet18_initial_weights.pth'), map_location='cpu'))
     elif load_network_flag:
         network.load_state_dict(torch.load(os.path.abspath(f'{network_directory}{experiment}.pth'), map_location='cpu'))
     else:

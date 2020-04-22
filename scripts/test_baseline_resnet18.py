@@ -39,11 +39,11 @@ from networks.resnet18_bn_rgbnir import resnet18 as resnet_rgbnir
 
 if __name__ == '__main__':
     if sys.platform == 'win32':
-        config_path = '/Users/frank.580/Desktop/code/cse-fabe/config/logan_pc.yaml'
+        config_path = 'C:/Users/frank.580/Desktop/mlcv-final-project/config/logan_pc.yaml'
     elif sys.platform == 'darwin':
-        config_path = '/Users/loganfrank/Desktop/code/mlcv-final-project/code/config/logan_mac.yaml'
+        config_path = '/Users/loganfrank/Desktop/research/agriculture/code/cse-fabe/config/logan_mac.yaml'
     elif sys.platform == 'linux':
-        pass
+        config_path = '/home/loganfrank/Desktop/code/mlcv-agriculture/code/config/logan_pc.yaml'
     dataset = input('Please enter the crop you want to use: ')
 
     pool = 'avg'
@@ -95,7 +95,7 @@ if __name__ == '__main__':
         transform = rgb_test_transform
     elif dataset == 'nir':
         transform = nir_test_transform
-    elif dataset == 'rgbnir':
+    elif dataset == 'rgbnir' or dataset == 'oracle':
         transform = rgbnir_test_transform
 
     if balanced:

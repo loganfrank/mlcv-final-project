@@ -1,16 +1,16 @@
 # User specific paths for data, etc
 Paths:
   # Location of image data
-  image_directory : '/home/loganfrank/Desktop/code/mlcv-agriculture/data/single_class/'
+  image_directory : 'C:/Users/frank.580/Desktop/single_class/'
 
   # Location of saved network weights, optimizers, etc.
-  network_directory : '/home/loganfrank/Desktop/code/mlcv-agriculture/data/networks/'
+  network_directory : 'C:/Users/frank.580/Desktop/'
 
   # Location of parsed data such as dataframes, etc.
-  data_directory : '/home/loganfrank/Desktop/code/mlcv-agriculture/data/parsed/'
+  data_directory : 'C:/Users/frank.580/Desktop/'
   
   # Location of results such as confusion matrices, final val/test accuracies, etc.
-  results_directory : '/home/loganfrank/Desktop/code/mlcv-agriculture/data/results/'
+  results_directory : 'C:/Users/frank.580/Desktop/results/'
   
 # Useful if multiple code files share variables
 Variables:
